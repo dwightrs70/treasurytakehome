@@ -1,5 +1,85 @@
 # **Take-Home Project: AI-Powered Alcohol Label Verification App**
 
+## **Development Notes**
+
+### Overview
+
+I developed this proof-of-concept (POC) as an extension of my personal website, which currently runs on Microsoft Azure, and named it Label Verification System.  My website uses the MERN technology stack: MongoDB, Express.js, React.js, and Node.js.  I also use TypeScript, which compiles to JavaScript.  The verification API is written in Python and runs in a Docker container on Azure.  I did not include all the code for my website, but I did include the relevant files for this POC in the backend, frontend, and shared folders.
+
+### Label Verification System Usage
+
+The Label Verification System (LVS) can be accessed at:
+
+https://dwightsage.com/label-verification-app/welcome
+
+The user can Manually Enter Label Data, Upload CSV File, or View Current Items.
+
+Manually Enter Label Data - this takes the user to a data entry screen where they can enter the label data.  The Class/Type field employs a searchable list.  If the Source of Product is IMPORTED, the user is prompted to enter the Country of Origin.  Finally, the user can select up to three images to add to the record.
+
+Upload CSV File - the user is prompted to browse to the CSV file, and if the file is accepted, the user is further prompted to upload the associated image file.  The user is provided a checklist of the expected images and their status.
+
+View Current Items - the user is provided a list of the items that have been entered.  From this list, the user can verify labels or delete records.  Each record includes some basic information along with verification results for critical data elements.  For each match, the result shows unverified until the record is verified.  If the result is a 100% match, the label is green.  If it's more than an 80% match, the label is orange.  Otherwise, the label is red.  There are thumbnails of the images for the record.  Clicking on the thumbnail shows the full-size image.  Clicking the Edit button for a record allows the user to edit it.
+
+I tried to keep the interface clean and easy to use.  Verifying the records is slow in the POC, as the API runs in a container that is set up to keep the cost low.  In a production environment, the API could be set up to run in a more powerful container.
+
+### Technical Notes
+
+GitHub Repository:
+
+https://github.com/dwightrs70/treasurytakehome
+
+This POC was not set up to be independently set up and run.  As this was a time-constrained request, I chose to integrate it with my personal website, but I did provide all the relevant source code for review.
+
+#### Approach
+
+As mentioned above, to integrate this POC with my personal website, I chose to use the MERN stack, with a web-based user interface.  The user interface is an React.js/Express.js/Node.js website.  There are API calls to the MongoDB database to store/edit the label data.  Images are stored in an Azure blob, with references stored in MongoDB.  The verification process is via a custom API.
+
+#### These are the folders contained in the repository:
+
+#### backend 
+
+Coded in TypeScript/JavaScript for Express.js/Node.js.
+
+src/controllers/labelController.ts - handles the API calls.
+src/models/Label.ts - the schema used to store label data in MongoDB.  MongoDB calls are wrapped in mongoose to manage the label data.
+src/routes/labelRoutes.ts - contains the website routing information to handle the API calls.
+src/utils/azureStorage.ts - Azure Storage calls used to store the images.
+
+#### frontend
+
+Coded in TypeScript/JavaScript for React.js/Express.js/Node.js.
+
+src/components/DataEntry.tsx - generates the data entry user interface.
+src/components/ImaageUploagModal.tsx - generates the image upload user interface.  (The CSV upload uses a standard file browser dialog box.)
+src/components/LabelList.tsx - generates the list of current items user interface.
+src/components/SearchableSelect.tsx - handles the searchable Class/Type list.
+src/components/Welcome.tsx - generates the welcome screen.
+
+#### shared
+
+types/LabelTypes.ts - shared label data interface/schema.
+
+#### data
+
+class_type.csv - list of Class/Type items.
+test_data.csv - list of label data for testing the upload CSV functionality.
+
+#### images
+
+A list of images that correspond to the test_data.csv records, with the exception of 10363001000317-back.png and 10363001000317-front.png, which can be used when testing manual data entry.
+
+#### ml-service
+
+.env - Not stored in the repository (a normal best practice), which contains the Azure storage connection information and API key.
+app.py - Coded in Python and contains the code to verify the label information (further explanation below).
+deploy.sh - script to build the container and deploy it to Azure.
+Dockerfile - script to build the Docker container.
+generate_api_key.sh - script to generate a random API key.
+requirements.txt - list of Python modules to include in the Docker container.
+
+In addition to standard libraries used to set up an API, the verification API uses easyocr to extract text from the image files, which is the main reason the POC verification is slow.  In a production environment, a commercial-grade OCR solution (such as Azure AI Vision) would provide much better performance and results.  It would also be beneficial to run the OCR process on a virtual machine with GPU support.  The API I provided upscales the image 2X and converts it to grayscale to improve readability, but these settings could be adjusted if needed.  I also rotate the images 90, 180, and 270 degrees to capture more text.  Once the text is extracted, different options can be used to match the provided label data.  I used a combination of standard in-string search, regular expression search, and a more advanced AI search, depending on the data element.  The AI search uses a standard sentence transformer to determine the likelihood that two strings are the same.  As with OCR, there are commercial options with better performance, such as OpenAI Embeddings.  My goal with the verification API was to provide an end-to-end POC to illustrate what might be possible.  Most of the performance issues with my API could be resolved with commercial software running on a more powerful virtual machine.
+
+
 ## **Project Background & Stakeholder Context**
 
 *The following document contains notes from our discovery sessions with the Compliance Division, along with technical requirements for the prototype. We've included stakeholder feedback to give you context on how this tool will be used.*
